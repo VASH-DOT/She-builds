@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny catch-all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // --- PRIMITIVE & AUTHENTICATION HELPERS ---
+    function isSignedIn() {
+      return request.auth != null && request.auth.uid != null;
+    }
+
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    // --- VALIDATION BLUEPRINTS ---
+
+    function isValidMessage(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.userId == request.auth.uid
+        && data.authorName is string && data.authorName.size() <= 150
+        && data.authorPhoto is string && data.authorPhoto.size() <= 600
+        && data.content is string && data.content.size() <= 500
+        && data.color is string && data.color.size() <= 50
+        && (data.createdAt == request.time || data.createdAt is string); // Accommodate string or direct timestamp
+    }
+
+    function isValidSong(data) {
+      return data.id == 'current'
+        && data.youtubeUrl is string && data.youtubeUrl.size() <= 500
+        && data.youtubeId is string && data.youtubeId.size() <= 128
+        && data.title is string && data.title.size() <= 300
+        && data.addedByName is string && data.addedByName.size() <= 150;
+    }
+
+    function isValidPresence(data, id) {
+      return id == request.auth.uid
+        && data.userId == request.auth.uid
+        && data.userName is string && data.userName.size() <= 150
+        && data.userPhoto is string && data.userPhoto.size() <= 600;
+    }
+
+    function isValidReaction(data) {
+      return data.id is string && data.id.size() <= 50
+        && data.count is int && data.count >= 0;
+    }
+
+    // Quick reactive increment assertion
+    function isReactionIncrement() {
+      return incoming().count == existing().count + 1;
+    }
+
+    function isValidReply(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.userId == request.auth.uid
+        && data.userName is string && data.userName.size() <= 150
+        && data.userPhoto is string && data.userPhoto.size() <= 600
+        && data.content is string && data.content.size() <= 1000
+        && data.challengeId is string && data.challengeId.size() <= 128;
+    }
+
+    function isValidMilestone(data) {
+      return data.id is string && data.id.size() <= 128
+        && data.userId == request.auth.uid
+        && data.userName is string && data.userName.size() <= 150
+        && data.title is string && data.title.size() <= 300
+        && data.type is string && (data.type == 'birthday' || data.type == 'achievement' || data.type == 'milestone')
+        && data.dateText is string && data.dateText.size() <= 100;
+    }
+
+    // --- COLLECTION BOUNDARIES ---
+
+    // 1. Gratitude Messages
+    match /gratitude_messages/{messageId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(messageId) && isValidMessage(incoming());
+      allow update: if isSignedIn() && isValidId(messageId) && existing().userId == request.auth.uid && isValidMessage(incoming()) && incoming().diff(existing()).affectedKeys().hasOnly(['content', 'color']);
+      allow delete: if isSignedIn() && isValidId(messageId) && existing().userId == request.auth.uid;
+    }
+
+    // 2. Queue-able YouTube Player Share
+    match /songs/{songId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(songId) && isValidSong(incoming());
+    }
+
+    // 3. Room-based Presence
+    match /presence/{userId} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && isValidId(userId) && isValidPresence(incoming(), userId);
+    }
+
+    // 4. Collaborative Quick Reactions
+    match /reactions/{reactionId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(reactionId) && isValidReaction(incoming());
+      allow update: if isSignedIn() && isValidId(reactionId) && isValidReaction(incoming()) && (isReactionIncrement() || incoming().diff(existing()).affectedKeys().hasOnly(['count', 'updatedAt']));
+    }
+
+    // 5. Coffee Break Challenges
+    match /challenge_replies/{replyId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(replyId) && isValidReply(incoming());
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+
+    // 6. Celebration corner milestones
+    match /milestones/{milestoneId} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isValidId(milestoneId) && isValidMilestone(incoming());
+      allow delete: if isSignedIn() && existing().userId == request.auth.uid;
+    }
+  }
+}

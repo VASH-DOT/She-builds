@@ -1,0 +1,114 @@
+{
+  "entities": {
+    "Message": {
+      "title": "Gratitude Message",
+      "description": "Sticky notes posted by staff members",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique message ID" },
+        "userId": { "type": "string", "description": "UID of the author" },
+        "authorName": { "type": "string", "description": "DisplayName of the author" },
+        "authorPhoto": { "type": "string", "description": "Profile picture URL of the author" },
+        "content": { "type": "string", "description": "The gratitude message detail" },
+        "color": { "type": "string", "description": "Background color of sticky note" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["id", "userId", "authorName", "content", "color", "createdAt"]
+    },
+    "Song": {
+      "title": "Shared Song",
+      "description": "The active YouTube song playing in the background",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique song record ID (usually 'current')" },
+        "youtubeUrl": { "type": "string", "description": "Complete YouTube URL" },
+        "youtubeId": { "type": "string", "description": "YouTube base video ID" },
+        "title": { "type": "string", "description": "Song title" },
+        "addedByName": { "type": "string", "description": "User who queued the song" },
+        "addedByPhoto": { "type": "string", "description": "User avatar who queued the song" },
+        "addedAt": { "type": "string", "format": "date-time", "description": "Queue timestamp" }
+      },
+      "required": ["id", "youtubeUrl", "youtubeId", "title", "addedByName", "addedAt"]
+    },
+    "Presence": {
+      "title": "Staff Presence Status",
+      "description": "Sipping presence indicator for online staff",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "The researcher/staff user ID" },
+        "userId": { "type": "string", "description": "UID of the staff member" },
+        "userName": { "type": "string", "description": "Display name of the staff member" },
+        "userPhoto": { "type": "string", "description": "Profile picture of the staff member" },
+        "lastActiveAt": { "type": "string", "format": "date-time", "description": "Last presence ping" }
+      },
+      "required": ["id", "userId", "userName", "lastActiveAt"]
+    },
+    "Reaction": {
+      "title": "Coffee Reaction",
+      "description": "Counter for global reactions to support each other",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Reaction identifier (energized, appreciated, inspired, supported)" },
+        "count": { "type": "integer", "description": "Total click count of reaction" },
+        "updatedAt": { "type": "string", "format": "date-time", "description": "Reaction update time" }
+      },
+      "required": ["id", "count", "updatedAt"]
+    },
+    "Reply": {
+      "title": "Challenge Reply",
+      "description": "Response to the daily coffee break challenge prompt",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique reply ID" },
+        "userId": { "type": "string", "description": "UID of responder" },
+        "userName": { "type": "string", "description": "Display name of responder" },
+        "userPhoto": { "type": "string", "description": "Profile picture of responder" },
+        "content": { "type": "string", "description": "Reply notes" },
+        "challengeId": { "type": "string", "description": "Identifier of the challenge prompt" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Post timestamp" }
+      },
+      "required": ["id", "userId", "userName", "content", "challengeId", "createdAt"]
+    },
+    "Milestone": {
+      "title": "Staff Milestone",
+      "description": "Celebrations, accomplishments, birthdays",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique milestone ID" },
+        "userId": { "type": "string", "description": "User asserting or matching this milestone" },
+        "userName": { "type": "string", "description": "Target or submitter name" },
+        "title": { "type": "string", "description": "The milestone or celebration details" },
+        "type": { "type": "string", "enum": ["birthday", "achievement", "milestone"], "description": "Milestone type" },
+        "dateText": { "type": "string", "description": "Freetext date e.g. June 15 or Today" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "Creation timestamp" }
+      },
+      "required": ["id", "userId", "userName", "title", "type", "dateText", "createdAt"]
+    }
+  },
+  "firestore": {
+    "gratitude_messages/{messageId}": {
+      "schema": "Message",
+      "description": "Shared board gratitude card messages"
+    },
+    "songs/{songId}": {
+      "schema": "Song",
+      "description": "Global audio playlists"
+    },
+    "presence/{userId}": {
+      "schema": "Presence",
+      "description": "Live check-in room listing"
+    },
+    "reactions/{reactionId}": {
+      "schema": "Reaction",
+      "description": "Global collaborative click metrics"
+    },
+    "challenge_replies/{replyId}": {
+      "schema": "Reply",
+      "description": "Daily coffee challenge text answers log"
+    },
+    "milestones/{milestoneId}": {
+      "schema": "Milestone",
+      "description": "Event notice shelf items"
+    }
+  }
+}

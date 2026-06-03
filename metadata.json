@@ -1,0 +1,6 @@
+{
+  "name": "Staff Coffee Corner",
+  "description": "A warm digital staff room for school facilitators and staff to connect, appreciate, listen to music, and enjoy quick coffee breaks together.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
